@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.casadetasha.pathtoplunder.singlelistapp.views.move
 
 class TaskViewModel : ViewModel() {
     private var mutableTasks: List<Task> by mutableStateOf(emptyList())
@@ -29,6 +30,10 @@ class TaskViewModel : ViewModel() {
 
     fun removeTask(task: Task) {
         mutableTasks = mutableTasks.toMutableList().apply { remove(task) }
+    }
+
+    fun moveTask(fromIndex: Int, toIndex: Int) {
+        mutableTasks = mutableTasks.toMutableList().apply { move(fromIndex, toIndex) }
     }
 }
 
