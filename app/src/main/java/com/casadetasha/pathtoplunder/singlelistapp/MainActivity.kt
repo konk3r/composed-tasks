@@ -5,11 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.casadetasha.pathtoplunder.singlelistapp.ui.theme.SingleListAppTheme
@@ -97,6 +99,7 @@ fun TaskRow(taskState: AddTaskState) {
             disabledElevation = 0.dp
         ),
         modifier = Modifier
+            .background(Color.Transparent)
             .padding(8.dp)
             .fillMaxWidth(90f)
             .animateContentSize()

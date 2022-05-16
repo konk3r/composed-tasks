@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import com.casadetasha.pathtoplunder.singlelistapp.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicReference
 
 @Composable
 fun DragAndDropList(
@@ -81,7 +80,6 @@ fun DragAndDropList(
                                 translationY = offsetOrNull ?: 0f
                             }
                     }
-                    .background(Color.White, shape = RoundedCornerShape(4.dp))
                     .fillMaxWidth()
             ) {
                 TaskRow(AddTaskState(item))
