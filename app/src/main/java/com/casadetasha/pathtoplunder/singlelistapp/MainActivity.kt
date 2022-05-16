@@ -1,7 +1,6 @@
 package com.casadetasha.pathtoplunder.singlelistapp
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -48,7 +47,7 @@ private fun TaskList(tasks: List<Task>, addTask: (Task) -> Unit) {
 
     LazyColumn {
         items(tasks) { task ->
-            TaskRow(AddTaskState(task)) { }
+            TaskRow(AddTaskState(task))
         }
 
         item {
@@ -70,29 +69,26 @@ private fun TaskList(tasks: List<Task>, addTask: (Task) -> Unit) {
                         }
                     }
 
-                    true -> TaskRow(AddTaskState(BlankTask(), isOpen = true)) { task ->
-                        if (task !is BlankTask) addTask(task)
+                    true -> AddTaskRow(AddTaskState(BlankTask(), isOpen = true)) { task ->
                         isOpen = false
+                        if (task is CreatedTask) { addTask(task) }
                     }
                 }
             }
         }
     }
-//        DragAndDropList(
-//            items = tasks,
-//            { from, to -> }
-//        )
 }
 
 @Composable
-private fun TaskRow(taskState: AddTaskState, onClose: (Task) -> Unit) {
+private fun TaskRow(taskState: AddTaskState) {
     val task = taskState.task
+    var name by remember { mutableStateOf(task.name) }
     var isOpen by remember { mutableStateOf(taskState.isOpen) }
+
     Button(
         onClick = {
             isOpen = !isOpen
-            if (!isOpen) onClose(task)
-            Log.d("Task", "Toggling open")
+            if (!isOpen) { task.name = name }
         },
         elevation = ButtonDefaults.elevation(
             defaultElevation = 6.dp,
@@ -107,7 +103,43 @@ private fun TaskRow(taskState: AddTaskState, onClose: (Task) -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(text = task.name)
             if (isOpen) {
-                TaskInput(task)
+                TaskInput(name) { name = it }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddTaskRow(taskState: AddTaskState, onInputFinished: (Task) -> Unit) {
+    val task = taskState.task
+    var name by remember { mutableStateOf(task.name) }
+    var isOpen by remember { mutableStateOf(taskState.isOpen) }
+
+    Button(
+        onClick = {
+            isOpen = !isOpen
+            if (!isOpen) {
+                val outgoingTask = when(name.isNotBlank()) {
+                    true -> CreatedTask(name)
+                    false -> task
+                }
+                onInputFinished(outgoingTask);
+            }
+        },
+        elevation = ButtonDefaults.elevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 8.dp,
+            disabledElevation = 0.dp
+        ),
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(90f)
+            .animateContentSize()
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = task.name)
+            if (isOpen) {
+                TaskInput(name) { name = it }
             }
         }
     }
@@ -116,17 +148,12 @@ private fun TaskRow(taskState: AddTaskState, onClose: (Task) -> Unit) {
 class AddTaskState(val task: Task, var isOpen: Boolean = false)
 
 @Composable
-private fun TaskInput(task: Task) {
-    var name by remember { mutableStateOf(task.name) }
-
+private fun TaskInput(name: String, onNameChanged : (String) -> Unit ) {
     TextField(
         value = name,
-        onValueChange = { task.name = it; name = it },
+        onValueChange = { onNameChanged(it) },
         label = { Text("Name") }
     )
-    Text(text = "Task complete!")
-    Text(text = "Good job!")
-    Text(text = "Have cookie!")
 }
 
 @Preview(showBackground = true)
