@@ -29,13 +29,12 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun DragAndDropList(
-    scope: CoroutineScope,
+    taskScope: CoroutineScope,
     items: List<Task>,
     onMove: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
     addTask: (Task) -> Unit
 ) {
-
     val scope = rememberCoroutineScope()
 
     var overscrollJob by remember { mutableStateOf<Job?>(null) }
@@ -81,7 +80,7 @@ fun DragAndDropList(
                     }
                     .fillMaxWidth()
             ) {
-                TaskRow(scope, AddTaskState(item))
+                TaskRow(taskScope, AddTaskState(item))
             }
         }
 
@@ -106,9 +105,9 @@ fun DragAndDropList(
                         }
                     }
 
-                    true -> AddTaskRow(AddTaskState(BlankTask(), isOpen = true)) { task ->
+                    true -> AddTaskRow(AddTaskState(Task(""), isOpen = true)) { task ->
                         isOpen = false
-                        if (task is CreatedTask) {
+                        if (task.name.isNotBlank()) {
                             addTask(task)
                         }
                     }

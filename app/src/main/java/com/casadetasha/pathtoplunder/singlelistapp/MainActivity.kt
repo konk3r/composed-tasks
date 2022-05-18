@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.lifecycleScope
+import com.casadetasha.pathtoplunder.singlelistapp.app.repos.TaskRoomDatabase
 import com.casadetasha.pathtoplunder.singlelistapp.ui.theme.SingleListAppTheme
 import com.casadetasha.pathtoplunder.singlelistapp.views.DragAndDropList
 import kotlinx.coroutines.*
@@ -26,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.loadTasks(TaskRoomDatabase.getDatabase(application))
         setContent {
             SingleListAppTheme {
                 // A surface container using the 'background' color from the theme
@@ -55,39 +57,6 @@ private fun TaskList(
     DragAndDropList(scope, items = tasks, moveTask) {
         addTask(it)
     }
-
-//    LazyColumn {
-//        items(tasks) { task ->
-//            TaskRow(AddTaskState(task))
-//        }
-//
-//        item {
-//            Crossfade(
-//                targetState = isOpen,
-//                modifier = Modifier.animateContentSize()
-//            ) { wasOpened ->
-//                when (wasOpened) {
-//                    false -> TextButton(
-//                        onClick = { isOpen = true },
-//                        modifier = Modifier
-//                            .padding(8.dp)
-//                            .fillMaxWidth(80f)
-//                            .animateContentSize()
-//                    ) {
-//                        Row(verticalAlignment = Alignment.CenterVertically) {
-//                            Text("Add task", fontWeight = Bold)
-//                            Text("+", fontSize = 18.sp, fontWeight = Bold)
-//                        }
-//                    }
-//
-//                    true -> AddTaskRow(AddTaskState(BlankTask(), isOpen = true)) { task ->
-//                        isOpen = false
-//                        if (task is CreatedTask) { addTask(task) }
-//                    }
-//                }
-//            }
-//        }
-//    }
 }
 
 @Composable
@@ -151,7 +120,7 @@ fun AddTaskRow(taskState: AddTaskState, onInputFinished: (Task) -> Unit) {
             isOpen = !isOpen
             if (!isOpen) {
                 val outgoingTask = when(name.isNotBlank()) {
-                    true -> CreatedTask(name)
+                    true -> Task(name)
                     false -> task
                 }
                 onInputFinished(outgoingTask);
@@ -197,6 +166,6 @@ fun DefaultPreview() {
 
 fun createDummyTasks(): List<Task> {
     return (1..5).map {
-        CreatedTask("Task $it")
+        Task("Task $it")
     }
 }
