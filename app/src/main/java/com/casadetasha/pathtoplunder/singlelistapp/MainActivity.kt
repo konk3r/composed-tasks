@@ -14,8 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import com.casadetasha.pathtoplunder.singlelistapp.ui.theme.SingleListAppTheme
 import com.casadetasha.pathtoplunder.singlelistapp.views.DragAndDropList
+import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity() {
 
@@ -33,7 +36,7 @@ class MainActivity : ComponentActivity() {
                     val moveTask: (Int, Int) -> Unit =  { fromIndex, toIndex ->
                         viewModel.moveTask(fromIndex, toIndex)
                     }
-                    TaskList(viewModel.getTasks(), moveTask) { newTask ->
+                    TaskList(lifecycleScope, viewModel.getTasks(), moveTask) { newTask ->
                         viewModel.addTask(newTask)
                     }
                 }
@@ -43,8 +46,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun TaskList(tasks: List<Task>, moveTask: (Int, Int) -> Unit, addTask: (Task) -> Unit) {
-    DragAndDropList(items = tasks, moveTask) {
+private fun TaskList(
+    scope: CoroutineScope,
+    tasks: List<Task>,
+    moveTask: (Int, Int) -> Unit,
+    addTask: (Task) -> Unit,
+) {
+    DragAndDropList(scope, items = tasks, moveTask) {
         addTask(it)
     }
 
@@ -83,15 +91,34 @@ private fun TaskList(tasks: List<Task>, moveTask: (Int, Int) -> Unit, addTask: (
 }
 
 @Composable
-fun TaskRow(taskState: AddTaskState) {
+fun TaskRow(scope: CoroutineScope, taskState: AddTaskState) {
     val task = taskState.task
     var name by remember { mutableStateOf(task.name) }
+    var isCompleted by remember { mutableStateOf(task.isCompleted) }
     var isOpen by remember { mutableStateOf(taskState.isOpen) }
+    var clickJob: Job? = null
 
     Button(
         onClick = {
-            isOpen = !isOpen
-            if (!isOpen) { task.name = name }
+            when (val job = clickJob) {
+                null -> {
+                    clickJob = scope.launch {
+                        delay(timeMillis = 300)
+                        if (!isActive) return@launch
+
+                        clickJob = null
+                        isOpen = !isOpen
+                        if (!isOpen) { task.name = name }
+                    }
+                }
+
+                else -> {
+                    job.cancel("Double tap recognized, ending click job")
+                    task.isCompleted = !task.isCompleted
+                    isCompleted = task.isCompleted
+                    clickJob = null
+                }
+            }
         },
         elevation = ButtonDefaults.elevation(
             defaultElevation = 6.dp,
@@ -105,7 +132,7 @@ fun TaskRow(taskState: AddTaskState) {
             .animateContentSize()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = task.name)
+            Text(text = "${task.name} ${if (isCompleted) "completed" else ""}")
             if (isOpen) {
                 TaskInput(name) { name = it }
             }
@@ -152,7 +179,7 @@ fun AddTaskRow(taskState: AddTaskState, onInputFinished: (Task) -> Unit) {
 class AddTaskState(val task: Task, var isOpen: Boolean = false)
 
 @Composable
-fun TaskInput(name: String, onNameChanged : (String) -> Unit ) {
+fun TaskInput(name: String, onNameChanged : (String) -> Unit) {
     TextField(
         value = name,
         onValueChange = { onNameChanged(it) },
@@ -164,7 +191,7 @@ fun TaskInput(name: String, onNameChanged : (String) -> Unit ) {
 @Composable
 fun DefaultPreview() {
     SingleListAppTheme {
-        TaskList(createDummyTasks(), { _,_ -> }) { }
+        TaskList(MainScope(), createDummyTasks(), { _, _ -> }, { })
     }
 }
 
